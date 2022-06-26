@@ -1,9 +1,16 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-export const fetchData = createAsyncThunk("fetch/fetchData", async function () {
-  const responce = await fetch("https://jsonplaceholder.typicode.com/posts");
-  const data = await responce.json();
-  return data;
+export const fetchData = createAsyncThunk("fetch/fetchData", async function (_, {rejectWithValue}) {
+  try {
+    const response = await fetch("https://jsonplaceholder.typicode.com/posts");
+    if (!response.ok) {
+      throw new Error("Server error");
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    return rejectWithValue(error.message)
+  }
 });
 
 export const counter = createSlice({
@@ -19,12 +26,16 @@ export const counter = createSlice({
   },
   extraReducers: {
     [fetchData.pending]: (state, action) => {
-        state.status = "loading";
-        state.error = null;
+      state.status = "loading";
+      state.error = null;
     },
     [fetchData.fulfilled]: (state, action) => {
-        state.status = "resolved"
-        state.posts = action.payload;
+      state.status = "resolved";
+      state.posts = action.payload;
+    },
+    [fetchData.rejected]: (state, action) => {
+      state.status = "rejected";
+      state.error = action.payload;
     },
   },
 });
